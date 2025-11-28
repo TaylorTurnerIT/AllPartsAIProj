@@ -1,2 +1,10 @@
 *.png
 *.json
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env/
