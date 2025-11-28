@@ -19,6 +19,7 @@ class PipelineConfig:
 
     # Module scripts
     BATCH_DETECT_SCRIPT = MODULE_1_DIR / "batch_detect.py"
+    LINE_TRACE_SCRIPT = MODULE_1_DIR / "line_trace.py"
     COMPRESSION_SCRIPT = MODULE_2_DIR / "main.py"
     FORMAT_ADAPTER_SCRIPT = MODULE_3_DIR / "format_adapter.py"
     CONNECTION_SCRIPT = MODULE_3_DIR / "find_connections.py"
@@ -41,6 +42,8 @@ class PipelineConfig:
 
     # Output file names
     BS_CONNECTED_JSON = "bs_connected.json"
+    INPAINTED_PNG = "inpainted.png"
+    LINES_JSON = "lines.json"
     COMPRESSION_RESULTS_JSON = "compression_results.json"
     RYAN_INPUT_JSON = "ryan_input.json"
     GRAPH_JSON = "graph.json"

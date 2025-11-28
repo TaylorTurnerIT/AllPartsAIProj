@@ -1,26 +1,26 @@
 """
 Quick line tracer for cleaned schematic images.
 
-Input: runs/detect/new_best_manual_merged/bs_inpainted.png
-Outputs (under runs/lines):
- - bs_edges.png: Canny edges on inverted mask
- - bs_skel.png: thinned skeleton
- - bs_lines_overlay.png: Hough lines drawn on original gray
- - bs_lines.json: line endpoints with length
+Detects lines in an inpainted image (with symbols removed) using Hough transform.
+
+Outputs:
+ - edges.png: Canny edges on inverted mask
+ - skeleton.png: thinned skeleton
+ - lines_overlay.png: Hough lines drawn on original gray
+ - lines.json: line endpoints with length
 
 Usage:
-    ./py312/bin/python line_trace.py
+    python line_trace.py INPUT_IMAGE --output OUTPUT_JSON [--debug-dir DEBUG_DIR]
 """
 
 from pathlib import Path
 import json
 import math
+import argparse
+import sys
 
 import cv2
 import numpy as np
-
-IMG_PATH = Path("runs/detect/new_best_manual_merged/bs_inpainted.png")
-OUT_DIR = Path("runs/lines")
 
 # Hough parameters (tune if needed)
 HOUGH_THRESHOLD = 60
@@ -48,14 +48,24 @@ def skeletonize(binary: np.ndarray) -> np.ndarray:
     return skel
 
 
-def main():
-    if not IMG_PATH.exists():
-        raise FileNotFoundError(f"Input image not found: {IMG_PATH}")
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+def detect_lines(image_path, output_json_path, debug_dir=None):
+    """
+    Detect lines in an image using Hough transform.
 
-    gray = cv2.imread(str(IMG_PATH), cv2.IMREAD_GRAYSCALE)
+    Args:
+        image_path: Path to input image (should be inpainted with symbols removed)
+        output_json_path: Path to save JSON output
+        debug_dir: Optional directory to save debug images
+    """
+    image_path = Path(image_path)
+    output_json_path = Path(output_json_path)
+
+    if not image_path.exists():
+        raise FileNotFoundError(f"Input image not found: {image_path}")
+
+    gray = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
     if gray is None:
-        raise RuntimeError(f"Could not read {IMG_PATH}")
+        raise RuntimeError(f"Could not read {image_path}")
 
     # Binarize and invert so lines are white on black
     _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -64,10 +74,7 @@ def main():
         inv = cv2.GaussianBlur(inv, (GAUSS_BLUR, GAUSS_BLUR), 0)
 
     edges = cv2.Canny(inv, 50, 150, apertureSize=3)
-    cv2.imwrite(str(OUT_DIR / "bs_edges.png"), edges)
-
     skel = skeletonize(inv)
-    cv2.imwrite(str(OUT_DIR / "bs_skel.png"), skel)
 
     # Hough lines on edges for robustness
     lines = cv2.HoughLinesP(
@@ -79,23 +86,54 @@ def main():
         maxLineGap=HOUGH_MAX_LINE_GAP,
     )
 
-    overlay = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
     out_lines = []
     if lines is not None:
         for l in lines[:, 0, :]:
             x1, y1, x2, y2 = map(int, l)
-            cv2.line(overlay, (x1, y1), (x2, y2), (0, 0, 255), 2)
             length = math.hypot(x2 - x1, y2 - y1)
             out_lines.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "length": length})
 
-    cv2.imwrite(str(OUT_DIR / "bs_lines_overlay.png"), overlay)
-    (OUT_DIR / "bs_lines.json").write_text(json.dumps({"lines": out_lines}, indent=2))
+    # Save JSON output
+    output_json_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_json_path, 'w') as f:
+        json.dump({"lines": out_lines}, f, indent=2)
 
-    print(f"Input: {IMG_PATH}")
-    print(f"Edges: {OUT_DIR / 'bs_edges.png'}")
-    print(f"Skeleton: {OUT_DIR / 'bs_skel.png'}")
-    print(f"Overlay: {OUT_DIR / 'bs_lines_overlay.png'}")
-    print(f"JSON: {OUT_DIR / 'bs_lines.json'} ({len(out_lines)} lines)")
+    print(f"Detected {len(out_lines)} lines")
+    print(f"Saved to: {output_json_path}")
+
+    # Optionally save debug images
+    if debug_dir:
+        debug_dir = Path(debug_dir)
+        debug_dir.mkdir(parents=True, exist_ok=True)
+
+        cv2.imwrite(str(debug_dir / "edges.png"), edges)
+        cv2.imwrite(str(debug_dir / "skeleton.png"), skel)
+
+        overlay = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        if lines is not None:
+            for l in lines[:, 0, :]:
+                x1, y1, x2, y2 = map(int, l)
+                cv2.line(overlay, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        cv2.imwrite(str(debug_dir / "lines_overlay.png"), overlay)
+
+        print(f"Debug images saved to: {debug_dir}")
+
+    return out_lines
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Detect lines in schematic images")
+    parser.add_argument("input_image", help="Path to input image (inpainted)")
+    parser.add_argument("--output", required=True, help="Path to output JSON file")
+    parser.add_argument("--debug-dir", help="Directory to save debug images (optional)")
+
+    args = parser.parse_args()
+
+    try:
+        detect_lines(args.input_image, args.output, args.debug_dir)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

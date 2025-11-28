@@ -2,12 +2,13 @@
 """
 Master Pipeline for Pneumatic/Hydraulic Diagram Analysis System.
 
-This script orchestrates all 5 stages of the diagram analysis pipeline:
-1. Symbol Detection (Dalton's module)
-2. Image Compression (Taylor's module)
-3. Connection Finding (Ryan's module)
-4. JSON Enhancement (Alden's module)
-5. Visualization (Koda's module)
+This script orchestrates all stages of the diagram analysis pipeline:
+1. Symbol Detection (Dalton's module) - Detects symbols and creates inpainted image
+1.5 Line Detection (Line tracing) - Detects lines using Hough transform on inpainted image
+2. Image Compression (Taylor's module) - Compresses symbols + lines into grid
+3. Connection Finding (Ryan's module) - Finds connections via BFS on red/green pixels
+4. JSON Enhancement (Alden's module) - Combines all data
+5. Visualization (Koda's module) - Visualizes the graph
 
 Usage:
     python pipeline.py [OPTIONS] INPUT_PATH
@@ -122,16 +123,25 @@ class DiagramPipeline:
 
             # Stage 1: Symbol Detection (if needed)
             if self.run_detection:
-                bs_connected_path = self._stage_1_detection()
+                bs_connected_path, inpainted_path = self._stage_1_detection()
             else:
                 # Copy input JSON to output directory
                 bs_connected_path = self.output_dir / PipelineConfig.BS_CONNECTED_JSON
                 self.logger.info("Stage 1: Symbol Detection [SKIPPED - using provided JSON]")
                 shutil.copy(self.input_path, bs_connected_path)
                 InputValidator.validate_bs_connected_json(bs_connected_path)
+                inpainted_path = None
+
+            # Stage 1.5: Line Detection (if we have an inpainted image)
+            if inpainted_path and inpainted_path.exists():
+                lines_path = self._stage_1_5_line_detection(inpainted_path)
+            else:
+                lines_path = None
+                self.logger.info("Stage 1.5: Line Detection [SKIPPED - no inpainted image]")
+                self.logger.info("")
 
             # Stage 2: Image Compression
-            compression_results_path = self._stage_2_compression(bs_connected_path)
+            compression_results_path = self._stage_2_compression(bs_connected_path, lines_path)
 
             # Stage 3: Connection Finding
             graph_path, ryan_output_png = self._stage_3_connections(compression_results_path)
@@ -155,6 +165,10 @@ class DiagramPipeline:
             self.logger.info("")
             self.logger.info("Generated files:")
             self.logger.info(f"  - {PipelineConfig.BS_CONNECTED_JSON}")
+            if (self.output_dir / PipelineConfig.INPAINTED_PNG).exists():
+                self.logger.info(f"  - {PipelineConfig.INPAINTED_PNG}")
+            if (self.output_dir / PipelineConfig.LINES_JSON).exists():
+                self.logger.info(f"  - {PipelineConfig.LINES_JSON}")
             self.logger.info(f"  - {PipelineConfig.COMPRESSION_RESULTS_JSON}")
             self.logger.info(f"  - {PipelineConfig.GRAPH_JSON}")
             self.logger.info(f"  - {PipelineConfig.OUTPUT_PNG}")
@@ -176,6 +190,7 @@ class DiagramPipeline:
         self.logger.info("-" * 60)
 
         output_path = self.output_dir / PipelineConfig.BS_CONNECTED_JSON
+        inpainted_path = self.output_dir / PipelineConfig.INPAINTED_PNG
 
         try:
             # Run batch detection script
@@ -184,7 +199,9 @@ class DiagramPipeline:
                 str(PipelineConfig.BATCH_DETECT_SCRIPT),
                 str(self.input_path),
                 "--output",
-                str(output_path)
+                str(output_path),
+                "--inpainted",
+                str(inpainted_path)
             ]
 
             self.logger.info(f"  Running: {' '.join(cmd)}")
@@ -204,9 +221,11 @@ class DiagramPipeline:
             OutputValidator.validate_json_file(output_path, required_fields=["symbols"])
 
             self.logger.info(f"  ✓ Output: {output_path.name}")
+            if inpainted_path.exists():
+                self.logger.info(f"  ✓ Output: {inpainted_path.name}")
             self.logger.info("")
 
-            return output_path
+            return output_path, inpainted_path
 
         except subprocess.CalledProcessError as e:
             raise StageExecutionError(
@@ -217,7 +236,54 @@ class DiagramPipeline:
         except Exception as e:
             raise StageExecutionError("Symbol Detection", str(e), e)
 
-    def _stage_2_compression(self, bs_connected_path):
+    def _stage_1_5_line_detection(self, inpainted_path):
+        """Stage 1.5: Line Detection using line tracing."""
+        self.logger.info("Stage 1.5: Line Detection")
+        self.logger.info("-" * 60)
+
+        output_path = self.output_dir / PipelineConfig.LINES_JSON
+
+        try:
+            # Run line detection script
+            cmd = [
+                sys.executable,
+                str(PipelineConfig.LINE_TRACE_SCRIPT),
+                str(inpainted_path),
+                "--output",
+                str(output_path)
+            ]
+
+            self.logger.info(f"  Running: {' '.join(cmd)}")
+
+            result = subprocess.run(
+                cmd,
+                capture_output=not self.verbose,
+                text=True,
+                check=True
+            )
+
+            if self.verbose and result.stdout:
+                self.logger.debug(result.stdout)
+
+            # Validate output
+            OutputValidator.validate_file_exists(output_path, "Line detection output")
+            OutputValidator.validate_json_file(output_path, required_fields=["lines"])
+
+            self.logger.info(f"  ✓ Output: {output_path.name}")
+            self.logger.info("")
+
+            return output_path
+
+        except subprocess.CalledProcessError as e:
+            raise StageExecutionError(
+                "Line Detection",
+                f"Line detection script failed: {e.stderr if e.stderr else str(e)}",
+                e
+            )
+        except Exception as e:
+            raise StageExecutionError("Line Detection", str(e), e)
+
+    def _stage_2_compression(self, bs_connected_path, lines_path=None):
         """Stage 2: Image Compression using Taylor's module."""
         self.logger.info("Stage 2: Image Compression")
         self.logger.info("-" * 60)
@@ -232,6 +298,10 @@ class DiagramPipeline:
                 "--output-dir",
                 str(self.output_dir)
             ]
+
+            # Add lines JSON if available
+            if lines_path and lines_path.exists():
+                cmd.extend(["--lines-json", str(lines_path)])
 
             self.logger.info(f"  Running: {' '.join(cmd)}")
 

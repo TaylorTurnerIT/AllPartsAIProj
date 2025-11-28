@@ -132,20 +132,24 @@ def generate_unique_colors(num_colors: int) -> List[Tuple[int, int, int]]:
 
 def create_image_from_symbols(
     symbols: List[Symbol],
+    lines: List[Dict] = None,
     background_color: Tuple[int, int, int] = (255, 255, 255),
-    bbox_multiplier: float = 1.0
+    bbox_multiplier: float = 1.0,
+    line_width: int = 3
 ) -> Image.Image:
     """
-    Create an image from symbols with each bounding box filled with a unique color.
+    Create an image from symbols and lines with each element in a unique color.
 
     Args:
         symbols: List of Symbol objects
+        lines: List of line dictionaries with x1, y1, x2, y2 coordinates (optional)
         background_color: Background color for the image (default: white)
         bbox_multiplier: Scale factor for all bounding boxes (default: 1.0)
                         Values > 1.0 enlarge boxes, values < 1.0 shrink boxes
+        line_width: Width of lines to draw in pixels (default: 3)
 
     Returns:
-        PIL Image with bounding boxes drawn
+        PIL Image with bounding boxes and lines drawn
     """
     # Calculate canvas size needed (with multiplier applied)
     max_x = 0
@@ -158,6 +162,12 @@ def create_image_from_symbols(
         max_x = max(max_x, scaled_bbox[2])
         max_y = max(max_y, scaled_bbox[3])
 
+    # Also consider line endpoints
+    if lines:
+        for line in lines:
+            max_x = max(max_x, line['x1'] * bbox_multiplier, line['x2'] * bbox_multiplier)
+            max_y = max(max_y, line['y1'] * bbox_multiplier, line['y2'] * bbox_multiplier)
+
     # Add some padding
     width = int(max_x) + 10
     height = int(max_y) + 10
@@ -166,10 +176,20 @@ def create_image_from_symbols(
     img = Image.new('RGB', (width, height), background_color)
     draw = ImageDraw.Draw(img)
 
-    # Generate unique colors for each symbol
+    # Draw lines first (in RED) so they appear below symbols
+    if lines:
+        line_color = (255, 0, 0)  # Pure red for lines
+        for line in lines:
+            x1 = int(line['x1'] * bbox_multiplier)
+            y1 = int(line['y1'] * bbox_multiplier)
+            x2 = int(line['x2'] * bbox_multiplier)
+            y2 = int(line['y2'] * bbox_multiplier)
+            draw.line([(x1, y1), (x2, y2)], fill=line_color, width=line_width)
+
+    # Generate unique colors for each symbol (excluding white and red)
     colors = generate_unique_colors(len(symbols))
 
-    # Draw each bounding box
+    # Draw each bounding box (in GREEN-ish colors)
     for symbol in symbols:
         bbox = symbol.bbox
         color = colors[symbol.id % len(colors)]
@@ -527,11 +547,12 @@ def save_json_output(output_data: Dict[str, Any], output_path: Path) -> None:
     print(f"  Saved JSON output to: {output_path.name}")
 
 
-def main(json_input_file=None, output_dir=None, bbox_multiplier=1.0):
+def main(json_input_file=None, lines_json_file=None, output_dir=None, bbox_multiplier=1.0):
     """Main entry point for the image compression tool.
 
     Args:
-        json_input_file: Path to input JSON file (default: bs_connected.json)
+        json_input_file: Path to input JSON file with symbols (default: bs_connected.json)
+        lines_json_file: Path to input JSON file with lines (optional)
         output_dir: Output directory path (default: timestamped output/ folder)
         bbox_multiplier: Scale factor for bounding boxes (default: 1.0)
     """
@@ -557,9 +578,22 @@ def main(json_input_file=None, output_dir=None, bbox_multiplier=1.0):
         print(f"Error loading JSON file: {e}")
         return
 
-    # Create image from symbols
-    print(f"\nCreating image from {len(symbols)} bounding boxes (multiplier: {bbox_multiplier})...")
-    img = create_image_from_symbols(symbols, bbox_multiplier=bbox_multiplier)
+    # Load lines from JSON if provided
+    lines = []
+    if lines_json_file:
+        try:
+            with open(lines_json_file, 'r') as f:
+                lines_data = json.load(f)
+                lines = lines_data.get('lines', [])
+            print(f"Loaded {len(lines)} lines from {lines_json_file}")
+        except FileNotFoundError:
+            print(f"Warning: {lines_json_file} not found, continuing without lines")
+        except Exception as e:
+            print(f"Warning: Error loading lines JSON: {e}, continuing without lines")
+
+    # Create image from symbols and lines
+    print(f"\nCreating image from {len(symbols)} bounding boxes and {len(lines)} lines (multiplier: {bbox_multiplier})...")
+    img = create_image_from_symbols(symbols, lines=lines, bbox_multiplier=bbox_multiplier)
 
     # Get image dimensions
     width, height = img.size
@@ -661,6 +695,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        '--lines-json',
+        help='Path to input JSON file with line definitions (optional)'
+    )
+
+    parser.add_argument(
         '--output-dir',
         help='Output directory path (default: timestamped output/ folder)'
     )
@@ -676,6 +715,7 @@ if __name__ == "__main__":
 
     main(
         json_input_file=args.input_json,
+        lines_json_file=args.lines_json,
         output_dir=args.output_dir,
         bbox_multiplier=args.bbox_multiplier
     )
