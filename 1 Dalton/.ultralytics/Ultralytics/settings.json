@@ -1,0 +1,21 @@
+{
+  "settings_version": "0.0.6",
+  "datasets_dir": "/Users/daltonsloan/Desktop/Classes/Fall 2025/CSC 4240 - 001/images/datasets",
+  "weights_dir": "/Users/daltonsloan/Desktop/Classes/Fall 2025/CSC 4240 - 001/images/weights",
+  "runs_dir": "/Users/daltonsloan/Desktop/Classes/Fall 2025/CSC 4240 - 001/images/runs",
+  "uuid": "09ebc59b3ebd0936fe793bcaaf4b03a17e9f850f93a97e84d64c6984dbbb2683",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "hub": true,
+  "mlflow": true,
+  "neptune": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": true
+}

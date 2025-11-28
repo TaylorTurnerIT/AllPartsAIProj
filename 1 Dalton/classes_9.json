@@ -1,0 +1,11 @@
+{
+  "motor": 0,
+  "switch": 1,
+  "transformer": 2,
+  "fuse": 3,
+  "breaker": 4,
+  "disconnect_switch": 5,
+  "resistor": 6,
+  "load_arrow": 7,
+  "bus_tie_breaker": 8
+}

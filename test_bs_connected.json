@@ -1,0 +1,31 @@
+{
+  "image_path": "0 Input Image/bs.png",
+  "image_width": 800,
+  "image_height": 600,
+  "symbols": [
+    {
+      "id": 0,
+      "cls_id": 1,
+      "name": "valve-a",
+      "conf": 0.95,
+      "bbox": [100, 100, 200, 200],
+      "center": [150, 150]
+    },
+    {
+      "id": 1,
+      "cls_id": 2,
+      "name": "valve-b",
+      "conf": 0.92,
+      "bbox": [300, 100, 400, 200],
+      "center": [350, 150]
+    },
+    {
+      "id": 2,
+      "cls_id": 3,
+      "name": "valve-c",
+      "conf": 0.88,
+      "bbox": [100, 300, 200, 400],
+      "center": [150, 350]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "categories": [
+    {
+      "id": 0,
+      "name": "breaker"
+    },
+    {
+      "id": 1,
+      "name": "circuit_breaker"
+    },
+    {
+      "id": 2,
+      "name": "fuse"
+    },
+    {
+      "id": 3,
+      "name": "ground"
+    },
+    {
+      "id": 4,
+      "name": "switch"
+    },
+    {
+      "id": 5,
+      "name": "transformer"
+    }
+  ],
+  "info": {
+    "year": 2025,
+    "version": "1.0",
+    "contributor": "Label Studio"
+  }
+}

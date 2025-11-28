@@ -1,0 +1,36 @@
+# macOS metadata
+.DS_Store
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+py312/
+
+# Training artifacts & checkpoints
+runs/
+*.pt
+*.pth
+*.onnx
+*.log
+symbol_classifier.pth
+yolo_sld_2/
+
+# Datasets and raw assets (regenerate locally)
+dataset/
+ALL_SVGS/
+all_svg_symbols/
+getvecta_svgs/
+yolo_sld/
+*.zip
+
+# CLI tooling
+.idea/
+.vscode/
