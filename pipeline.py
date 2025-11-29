@@ -374,12 +374,14 @@ class DiagramPipeline:
 
         try:
             # First, convert format using adapter
+            # Use compression index 2 (finest 8x8 grid) for better symbol preservation
             self.logger.info("  Converting format (Taylor → Ryan)...")
             cmd_adapter = [
                 sys.executable,
                 str(PipelineConfig.FORMAT_ADAPTER_SCRIPT),
                 str(compression_results_path),
-                str(ryan_input_path)
+                str(ryan_input_path),
+                "--compression-index", "2"  # Use finest grid (8x8)
             ]
 
             subprocess.run(cmd_adapter, capture_output=True, text=True, check=True)

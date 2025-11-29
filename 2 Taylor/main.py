@@ -328,6 +328,7 @@ def find_most_common_color(
     """
     Find the most common color in a square region.
     White pixels are ignored unless all pixels are white.
+    GREEN pixels (symbols) have priority over RED pixels (lines).
     Handles partial squares at image boundaries.
     """
     height = len(matrix)
@@ -340,15 +341,24 @@ def find_most_common_color(
     # Count occurrences of each color
     color_count = Counter()
     has_non_white = False
+    has_green = False
 
     for y in range(start_y, end_y):
         for x in range(start_x, end_x):
             pixel = matrix[y][x]
             if not is_white(pixel):
                 has_non_white = True
+                # Check if this is green (G > R and G > B)
+                if pixel.g > pixel.r and pixel.g > pixel.b:
+                    has_green = True
             color_count[pixel] += 1
 
-    # If there are any non-white pixels, find the most common non-white color
+    # Priority 1: If there's any green (symbols), return pure green
+    # This ensures symbols are preserved over lines during compression
+    if has_green:
+        return Pixel(0, 255, 0, 255)
+
+    # Priority 2: If there are non-white pixels but no green, find most common
     if has_non_white:
         non_white_colors = [(pixel, count) for pixel, count in color_count.items()
                            if not is_white(pixel)]
