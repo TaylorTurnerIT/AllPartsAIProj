@@ -1,4 +1,4 @@
-# 🔌 Single Line Diagram Analysis Pipeline
+# End-to-End Pipeline for Digitizing Electrical Single-Line Diagrams (SLDs)
 
 > **Automated detection, line tracing, and connection analysis for electrical Single Line Diagrams (SLDs)**
 
