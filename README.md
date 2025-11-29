@@ -52,56 +52,56 @@ python pipeline.py "1 Dalton/bs.png"
                           │
                           ▼
         ┌─────────────────────────────────────────┐
-        │  STAGE 1: Symbol Detection (YOLO)       │
-        │  • Multi-orientation detection           │
-        │  • Detects transformers & breakers       │
-        │  • Outputs: symbols JSON + inpainted PNG │
+        │  STAGE 1: Symbol Detection (YOLO)           │
+        │  • Multi-orientation detection              │
+        │  • Detects transformers & breakers          │
+        │  • Outputs: symbols JSON + inpainted PNG    │
         └─────────────────┬───────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────────┐
-        │  STAGE 1.5: Line Detection (Hough)      │
-        │  • Canny edge detection                  │
-        │  • Hough line transform                  │
-        │  • Outputs: lines JSON                   │
+        │  STAGE 1.5: Line Detection (Hough)          │
+        │  • Canny edge detection                     │
+        │  • Hough line transform                     │
+        │  • Outputs: lines JSON                      │
         └─────────────────┬───────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────────┐
-        │  STAGE 2: Image Compression              │
-        │  • Draw symbols (GREEN pixels)           │
-        │  • Draw lines (RED pixels)               │
-        │  • Compress to 8x8 grid                  │
-        │  • Outputs: compressed grid JSON         │
+        │  STAGE 2: Image Compression                 │
+        │  • Draw symbols (GREEN pixels)              │
+        │  • Draw lines (RED pixels)                  │
+        │  • Compress to 8x8 grid                     │
+        │  • Outputs: compressed grid JSON            │
         └─────────────────┬───────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────────┐
-        │  STAGE 3: Connection Finding (BFS)       │
-        │  • BFS from green through red pixels     │
-        │  • Finds which symbols connect           │
-        │  • Outputs: connection graph JSON        │
+        │  STAGE 3: Connection Finding (BFS)          │
+        │  • BFS from green through red pixels        │
+        │  • Finds which symbols connect              │
+        │  • Outputs: connection graph JSON           │
         └─────────────────┬───────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────────┐
-        │  STAGE 4: JSON Enhancement               │
-        │  • Combines all data sources             │
-        │  • Adds metadata                         │
-        │  • Outputs: enhanced diagram JSON        │
+        │  STAGE 4: JSON Enhancement                  │
+        │  • Combines all data sources                │
+        │  • Adds metadata                            │
+        │  • Outputs: enhanced diagram JSON           │
         └─────────────────┬───────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────────┐
-        │  STAGE 5: Visualization                  │
-        │  • Generates matplotlib graph            │
-        │  • Shows connections and labels          │
-        │  • Outputs: PNG visualization            │
+        │  STAGE 5: Visualization                     │
+        │  • Generates matplotlib graph               │
+        │  • Shows connections and labels             │
+        │  • Outputs: PNG visualization               │
         └─────────────────┬───────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              OUTPUT: Graphs, JSONs, Visualizations               │
+│              OUTPUT: Graphs, JSONs, Visualizations                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
