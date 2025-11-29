@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 *.env
 .env/
+runs/
 
 # Ignore output directory
 6 Output Image
