@@ -23,9 +23,9 @@ import cv2
 import numpy as np
 
 # Hough parameters (tune if needed)
-HOUGH_THRESHOLD = 60
-HOUGH_MIN_LINE_LENGTH = 40
-HOUGH_MAX_LINE_GAP = 8
+HOUGH_THRESHOLD = 40
+HOUGH_MIN_LINE_LENGTH = 20
+HOUGH_MAX_LINE_GAP = 20
 GAUSS_BLUR = 3  # must be odd; 0 disables
 
 
