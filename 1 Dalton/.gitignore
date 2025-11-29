@@ -16,7 +16,6 @@ py312/
 
 # Training artifacts & checkpoints
 runs/
-*.pt
 *.pth
 *.onnx
 *.log
