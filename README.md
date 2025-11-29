@@ -159,6 +159,13 @@ pip install -r requirements.txt
 
 See [`requirements.txt`](requirements.txt) for complete list.
 
+### Install Git LFS
+sudo apt install git-lfs
+
+# Then, in your repository, initialize Git LFS and pull files:
+git lfs install
+git lfs pull
+
 ---
 
 ## 🎯 Usage
