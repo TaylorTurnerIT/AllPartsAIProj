@@ -18,7 +18,7 @@ class PipelineConfig:
     MODULE_5_DIR = PROJECT_ROOT / "5 Koda"
 
     # Module scripts
-    BATCH_DETECT_SCRIPT = MODULE_1_DIR / "batch_detect.py"
+    BATCH_DETECT_SCRIPT = MODULE_1_DIR / "run_new_best.py"  # Use the proven detection script
     LINE_TRACE_SCRIPT = MODULE_1_DIR / "line_trace.py"
     COMPRESSION_SCRIPT = MODULE_2_DIR / "main.py"
     FORMAT_ADAPTER_SCRIPT = MODULE_3_DIR / "format_adapter.py"

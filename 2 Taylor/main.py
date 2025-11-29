@@ -135,7 +135,7 @@ def create_image_from_symbols(
     lines: List[Dict] = None,
     background_color: Tuple[int, int, int] = (255, 255, 255),
     bbox_multiplier: float = 1.0,
-    line_width: int = 3
+    line_width: int = 8
 ) -> Image.Image:
     """
     Create an image from symbols and lines with each element in a unique color.
@@ -146,7 +146,7 @@ def create_image_from_symbols(
         background_color: Background color for the image (default: white)
         bbox_multiplier: Scale factor for all bounding boxes (default: 1.0)
                         Values > 1.0 enlarge boxes, values < 1.0 shrink boxes
-        line_width: Width of lines to draw in pixels (default: 3)
+        line_width: Width of lines to draw in pixels (default: 8, thick enough to survive compression)
 
     Returns:
         PIL Image with bounding boxes and lines drawn

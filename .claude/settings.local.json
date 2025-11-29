@@ -3,7 +3,8 @@
     "allow": [
       "Bash(chmod +x:*)",
       "Bash(python pipeline.py:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(python -c:*)"
     ],
     "deny": [],
     "ask": []

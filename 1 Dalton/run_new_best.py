@@ -1,13 +1,18 @@
 """
-Run `new_best.pt` on One-Line-Sample.png with a two-pass trick:
+Run `new_best.pt` on an image with a two-pass trick:
  - Pass 1: original orientation (saves annotated image/labels)
  - Pass 2: 90° CCW rotated, boxes unrotated and merged to catch vertical breakers
 
 Usage:
-    python3 run_new_best.py
+    python3 run_new_best.py [IMAGE_PATH] [--output JSON_PATH] [--inpainted INPAINTED_PATH]
+
+    If no arguments provided, uses default bs.png
 """
 
 import os
+import sys
+import json
+import argparse
 from pathlib import Path
 from typing import List, Tuple
 
@@ -16,9 +21,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from ultralytics import YOLO
 
-# Hardcoded inputs
-IMAGE_PATH = Path(__file__).parent / "bs.png"
-MODEL_PATH = Path(__file__).parent / "new_best.pt"
+# Default inputs (used if no arguments provided)
+DEFAULT_IMAGE_PATH = Path(__file__).parent / "bs.png"
+DEFAULT_MODEL_PATH = Path(__file__).parent / "new_best.pt"
 RUN_NAME = "new_best_manual"
 IMG_SIZE = 1600
 CONF = 0.25
@@ -190,13 +195,33 @@ def save_merged_labels(boxes, width, height, out_dir: Path, stem: str):
     return label_path
 
 
-def main():
+def main(image_path=None, output_json=None, output_inpainted=None, model_path=None):
+    """
+    Run detection with optional output paths.
+
+    Args:
+        image_path: Path to input image (default: bs.png)
+        output_json: Path to save JSON output (optional)
+        output_inpainted: Path to save inpainted image (optional)
+        model_path: Path to model (default: new_best.pt)
+    """
     os.environ.setdefault("YOLO_CONFIG_DIR", str(Path(".ultralytics").resolve()))
 
-    img = Image.open(IMAGE_PATH).convert("RGB")
+    # Use defaults if not provided
+    if image_path is None:
+        image_path = DEFAULT_IMAGE_PATH
+    else:
+        image_path = Path(image_path)
+
+    if model_path is None:
+        model_path = DEFAULT_MODEL_PATH
+    else:
+        model_path = Path(model_path)
+
+    img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    model = YOLO(str(MODEL_PATH))
+    model = YOLO(str(model_path))
 
     orientations = [
         ("main", 0, True),
@@ -210,7 +235,7 @@ def main():
 
     for tag, angle, do_save in orientations:
         if angle == 0:
-            img_src = str(IMAGE_PATH)
+            img_src = str(image_path)
         else:
             img_src = np.array(img.rotate(angle, expand=True))
 
@@ -288,14 +313,25 @@ def main():
         shrunk.append({**b, "xyxy": shrunk_xyxy})
 
     merged_labels_dir = Path("runs/detect") / f"{RUN_NAME}_merged" / "labels"
-    label_path = save_merged_labels(shrunk, width, height, merged_labels_dir, IMAGE_PATH.stem)
+    label_path = save_merged_labels(shrunk, width, height, merged_labels_dir, image_path.stem)
     merged_img_dir = merged_labels_dir.parent
     merged_img_path = None
     inpaint_img_path = None
     if ANNOTATE_MERGED:
-        merged_img_path = save_annotated(IMAGE_PATH, shrunk, merged_img_dir)
+        merged_img_path = save_annotated(image_path, shrunk, merged_img_dir)
     if INPAINT_ENABLED:
-        inpaint_img_path = inpaint_symbols(IMAGE_PATH, shrunk, merged_img_dir)
+        # Use custom output path if provided, otherwise use default location
+        if output_inpainted:
+            inpaint_custom_path = Path(output_inpainted)
+            inpaint_custom_path.parent.mkdir(parents=True, exist_ok=True)
+            inpaint_img_path = inpaint_symbols(image_path, shrunk, inpaint_custom_path.parent)
+            # Rename to the exact path requested
+            if inpaint_img_path != inpaint_custom_path:
+                import shutil
+                shutil.move(str(inpaint_img_path), str(inpaint_custom_path))
+                inpaint_img_path = inpaint_custom_path
+        else:
+            inpaint_img_path = inpaint_symbols(image_path, shrunk, merged_img_dir)
 
     print(f"\nSaved primary outputs to: {save_dir}")
     print(f"Merged labels (two-pass) saved to: {label_path}")
@@ -308,6 +344,67 @@ def main():
         xyxy = [round(v, 1) for v in b["xyxy"]]
         print(f"{i}. {b['name']}  conf={b['conf']:.3f}  xyxy={xyxy}")
 
+    # Generate JSON output if requested
+    if output_json:
+        symbols = []
+        for idx, b in enumerate(shrunk):
+            center = [
+                (b["xyxy"][0] + b["xyxy"][2]) / 2,
+                (b["xyxy"][1] + b["xyxy"][3]) / 2
+            ]
+            symbols.append({
+                "id": idx,
+                "cls_id": b["cls"],
+                "name": b["name"],
+                "conf": b["conf"],
+                "bbox": b["xyxy"],
+                "center": center
+            })
+
+        json_data = {
+            "symbols": symbols,
+            "lines": [],  # Will be filled by line detection
+            "connections": []  # Will be filled by connection finding
+        }
+
+        output_json_path = Path(output_json)
+        output_json_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_json_path, 'w') as f:
+            json.dump(json_data, f, indent=2)
+        print(f"JSON output saved to: {output_json_path}")
+
+    return shrunk
+
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Run YOLO detection with multi-orientation for better breaker detection"
+    )
+    parser.add_argument(
+        "image_path",
+        nargs="?",
+        default=None,
+        help="Path to input image (default: bs.png in same directory)"
+    )
+    parser.add_argument(
+        "--output",
+        help="Path to save JSON output (optional)"
+    )
+    parser.add_argument(
+        "--inpainted",
+        help="Path to save inpainted image (optional)"
+    )
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Path to model file (default: new_best.pt in same directory)"
+    )
+
+    args = parser.parse_args()
+
+    main(
+        image_path=args.image_path,
+        output_json=args.output,
+        output_inpainted=args.inpainted,
+        model_path=args.model
+    )
