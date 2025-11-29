@@ -137,17 +137,17 @@ def main():
         with open(output_path, 'w') as f:
             json.dump(ryan_data, f, indent=2)
 
-        print(f"✓ Converted format: {output_path}")
+        print(f"Converted format: {output_path}")
         sys.exit(0)
 
     except FileNotFoundError:
-        print(f"✗ Error: Input file not found: {args.input_json}", file=sys.stderr)
+        print(f"Error: Input file not found: {args.input_json}", file=sys.stderr)
         sys.exit(1)
     except json.JSONDecodeError as e:
-        print(f"✗ Error: Invalid JSON in input file: {e}", file=sys.stderr)
+        print(f"Error: Invalid JSON in input file: {e}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
-        print(f"✗ Error: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
