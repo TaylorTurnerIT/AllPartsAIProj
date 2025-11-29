@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Master Pipeline for Pneumatic/Hydraulic Diagram Analysis System.
+Master Pipeline for Single Line Diagram (SLD) Analysis System.
 
 This script orchestrates all stages of the diagram analysis pipeline:
 1. Symbol Detection (Dalton's module) - Detects symbols and creates inpainted image
@@ -110,7 +110,7 @@ class DiagramPipeline:
         """Execute the full pipeline."""
         try:
             self.logger.info("=" * 60)
-            self.logger.info("PNEUMATIC/HYDRAULIC DIAGRAM ANALYSIS PIPELINE")
+            self.logger.info("SINGLE LINE DIAGRAM (SLD) ANALYSIS PIPELINE")
             self.logger.info("=" * 60)
             self.logger.info(f"Input: {self.input_path}")
             self.logger.info(f"Mode: {self.input_type}")
@@ -520,7 +520,7 @@ class DiagramPipeline:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Pneumatic/Hydraulic Diagram Analysis Pipeline",
+        description="Single Line Diagram (SLD) Analysis Pipeline",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

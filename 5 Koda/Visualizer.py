@@ -49,7 +49,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Visualize pneumatic/hydraulic diagram graph"
+        description="Visualize Single Line Diagram (SLD) graph"
     )
 
     parser.add_argument(

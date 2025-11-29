@@ -1,8 +1,8 @@
-# 🔌 Pneumatic/Hydraulic Diagram Analysis Pipeline
+# 🔌 Single Line Diagram Analysis Pipeline
 
-> **Automated detection, line tracing, and connection analysis for pneumatic and hydraulic single-line diagrams**
+> **Automated detection, line tracing, and connection analysis for electrical Single Line Diagrams (SLDs)**
 
-A complete end-to-end pipeline that detects symbols, traces connecting lines, analyzes component relationships, and generates visual connection graphs from schematic diagrams.
+A complete end-to-end pipeline that detects electrical symbols (transformers, breakers), traces connecting lines, analyzes component relationships, and generates visual connection graphs from Single Line Diagrams.
 
 ---
 
@@ -224,7 +224,7 @@ python pipeline.py "0 Input Image/bs_simplified.png"
 ### Stage 1: Symbol Detection
 **Module:** `1 Dalton/run_new_best.py`
 
-Detects pneumatic/hydraulic symbols using YOLO object detection with multi-orientation processing.
+Detects electrical symbols (transformers, breakers) using YOLO object detection with multi-orientation processing.
 
 **Key Features:**
 - Multi-orientation detection (0°, 90°, 270°) to catch vertical components

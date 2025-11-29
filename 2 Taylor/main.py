@@ -695,7 +695,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Image compression tool for pneumatic/hydraulic diagrams"
+        description="Image compression tool for Single Line Diagrams (SLDs)"
     )
 
     parser.add_argument(
