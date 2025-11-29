@@ -136,9 +136,8 @@ class DiagramPipeline:
             if inpainted_path and inpainted_path.exists():
                 lines_path = self._stage_1_5_line_detection(inpainted_path)
             else:
-                lines_path = None
-                self.logger.info("Stage 1.5: Line Detection [SKIPPED - no inpainted image]")
-                self.logger.info("")
+                # Check if the input JSON already contains lines
+                lines_path = self._extract_lines_from_json(bs_connected_path)
 
             # Stage 2: Image Compression
             compression_results_path = self._stage_2_compression(bs_connected_path, lines_path)
@@ -235,6 +234,35 @@ class DiagramPipeline:
             )
         except Exception as e:
             raise StageExecutionError("Symbol Detection", str(e), e)
+
+    def _extract_lines_from_json(self, bs_connected_path):
+        """Extract lines from bs_connected.json if they exist."""
+        import json
+
+        try:
+            with open(bs_connected_path, 'r') as f:
+                data = json.load(f)
+
+            lines = data.get('lines', [])
+
+            if lines:
+                # Save lines to separate file
+                lines_path = self.output_dir / PipelineConfig.LINES_JSON
+                with open(lines_path, 'w') as f:
+                    json.dump({"lines": lines}, f, indent=2)
+
+                self.logger.info("Stage 1.5: Line Detection [SKIPPED - using lines from input JSON]")
+                self.logger.info(f"  Found {len(lines)} lines in input JSON")
+                self.logger.info("")
+                return lines_path
+            else:
+                self.logger.info("Stage 1.5: Line Detection [SKIPPED - no lines in input JSON]")
+                self.logger.info("")
+                return None
+
+        except Exception as e:
+            self.logger.warning(f"Could not extract lines from JSON: {e}")
+            return None
 
     def _stage_1_5_line_detection(self, inpainted_path):
         """Stage 1.5: Line Detection using line tracing."""

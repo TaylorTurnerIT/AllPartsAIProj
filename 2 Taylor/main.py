@@ -177,6 +177,7 @@ def create_image_from_symbols(
     draw = ImageDraw.Draw(img)
 
     # Draw lines first (in RED) so they appear below symbols
+    # RED: where R > G and R > B (for Ryan's connection finding)
     if lines:
         line_color = (255, 0, 0)  # Pure red for lines
         for line in lines:
@@ -186,13 +187,12 @@ def create_image_from_symbols(
             y2 = int(line['y2'] * bbox_multiplier)
             draw.line([(x1, y1), (x2, y2)], fill=line_color, width=line_width)
 
-    # Generate unique colors for each symbol (excluding white and red)
-    colors = generate_unique_colors(len(symbols))
+    # Draw symbols in GREEN (where G > R and G > B for Ryan's connection finding)
+    # All symbols get the SAME pure green color so Ryan's BFS can identify them
+    symbol_color = (0, 255, 0)  # Pure green for all symbols
 
-    # Draw each bounding box (in GREEN-ish colors)
     for symbol in symbols:
         bbox = symbol.bbox
-        color = colors[symbol.id % len(colors)]
 
         # Apply multiplier and convert bbox to integer coordinates
         x1 = int(bbox[0] * bbox_multiplier)
@@ -200,8 +200,8 @@ def create_image_from_symbols(
         x2 = int(bbox[2] * bbox_multiplier)
         y2 = int(bbox[3] * bbox_multiplier)
 
-        # Fill the bounding box with the unique color
-        draw.rectangle([x1, y1, x2, y2], fill=color, outline=color)
+        # Fill the bounding box with pure green
+        draw.rectangle([x1, y1, x2, y2], fill=symbol_color, outline=symbol_color)
 
     return img
 
