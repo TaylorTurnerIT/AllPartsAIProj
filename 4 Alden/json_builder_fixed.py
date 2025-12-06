@@ -213,8 +213,8 @@ class DiagramBuilder:
             for symbol in self.symbols_data["symbols"]:
                 # Estimate grid coordinates from bbox center
                 center = symbol.get("center", [0, 0])
-                grid_x = center[0] // self.scale
-                grid_y = center[1] // self.scale
+                grid_x = int(center[0] // self.scale)
+                grid_y = int(center[1] // self.scale)
 
                 color = self.get_color_at_coordinate(grid_x, grid_y)
                 new_symbol = self.build_new_symbol(symbol, color)
